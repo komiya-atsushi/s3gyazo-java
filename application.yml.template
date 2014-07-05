@@ -1,0 +1,14 @@
+s3:
+  bucket: (bucket name)
+  region: (region)
+
+iam:
+  accessKey: (access key)
+  secretKey: (secret key)
+
+app:
+  url:
+    prefix: http://${s3.bucket}.s3-website-${s3.region}.amazonaws.com/
+
+server:
+  port: 80
