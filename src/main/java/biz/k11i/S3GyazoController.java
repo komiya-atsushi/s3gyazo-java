@@ -22,6 +22,7 @@
  */
 package biz.k11i;
 
+import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.*;
@@ -137,13 +138,13 @@ public class S3GyazoController {
         String secretKey;
 
         @Bean
-        BasicAWSCredentials basicAWSCredentials() {
+        AWSCredentials awsCredentials() {
             return new BasicAWSCredentials(accessKey, secretKey);
         }
 
         @Bean
         AmazonS3Client amazonS3Client() {
-            return new AmazonS3Client(basicAWSCredentials());
+            return new AmazonS3Client(awsCredentials());
         }
     }
 }
