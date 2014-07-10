@@ -22,6 +22,7 @@
  */
 package biz.k11i;
 
+import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.*;
@@ -29,9 +30,12 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
@@ -59,10 +63,12 @@ public class S3GyazoController {
     private static final Logger logger = LoggerFactory.getLogger(S3GyazoController.class);
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormat.forPattern("yyyy.MM.dd-HH.mm.ss.SSS");
 
-    @Value("${s3.bucket}") private String bucket;
-    @Value("${iam.accessKey}") private String accessKey;
-    @Value("${iam.secretKey}") private String secretKey;
-    @Value("${app.url.prefix}") private String urlPrefix;
+    @Value("${s3.bucket}")
+    String bucket;
+    @Value("${app.url.prefix}")
+    String urlPrefix;
+    @Autowired
+    AmazonS3Client amazonS3Client;
 
     @RequestMapping(value = "/upload.cgi", method = RequestMethod.POST)
     @ResponseBody
@@ -89,8 +95,7 @@ public class S3GyazoController {
                     objectMetadata)
                     .withCannedAcl(CannedAccessControlList.PublicRead);
 
-            new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey))
-                    .putObject(req);
+            amazonS3Client.putObject(req);
         }
 
         String result = urlPrefix + filename;
@@ -122,6 +127,24 @@ public class S3GyazoController {
     public static class BadRequestException extends RuntimeException {
         BadRequestException(String message) {
             super(message);
+        }
+    }
+
+    @Configuration
+    static class AppConfig {
+        @Value("${iam.accessKey}")
+        String accessKey;
+        @Value("${iam.secretKey}")
+        String secretKey;
+
+        @Bean
+        AWSCredentials awsCredentials() {
+            return new BasicAWSCredentials(accessKey, secretKey);
+        }
+
+        @Bean
+        AmazonS3Client amazonS3Client() {
+            return new AmazonS3Client(awsCredentials());
         }
     }
 }
